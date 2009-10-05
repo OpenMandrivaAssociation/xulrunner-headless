@@ -48,7 +48,7 @@ Autoreq: 0
 Autoprov: 0
 
 BuildRequires:  nspr-devel >= %{nspr_version}
-BuildRequires:  nss-devel >= %{nss_version}
+BuildRequires:  nss-static-devel >= %{nss_version}
 #BuildRequires:  cairo-devel >= %{cairo_version}
 #BuildRequires:  libpng-devel
 #BuildRequires:  libjpeg-devel
