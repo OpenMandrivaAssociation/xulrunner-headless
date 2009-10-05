@@ -8,18 +8,24 @@
 
 %define build_langpacks      1
 
-%define version_internal 1.9.2a1pre-headless
+%define version 1.9.2
+%define snapshot 20090731
+%define sversion 0.0~%{snapshot}
+%define rel 1
+%define release %mkrel 0.%{snapshot}.%{rel}
+
+%define version_internal %{version}a1pre-headless
 %define mozappdir         %{_libdir}/%{source_name}-%{version_internal}
 %define mozdevdir         %{_libdir}/%{source_name}-devel-%{version_internal}
 
 Summary:        XUL Runtime for Gecko Applications
 Name:           xulrunner-headless
-Version:        0.0~20090731
-Release:        2.1.moblin2
+Version:        %{version}
+Release:        %{release}
 URL:            http://developer.mozilla.org/En/XULRunner
 License:        MPLv1.1 or GPLv2+ or LGPLv2+
 Group:          Applications/Internet
-Source0:        xulrunner-%{version}.tar.bz2
+Source0:        xulrunner-%{sversion}.tar.bz2
 %if %{build_langpacks}
 Source2:        xulrunner-langpacks.tar.bz2
 %endif
@@ -150,7 +156,7 @@ Development files for building Gecko applications written in python.
 %prep
 %setup -q -c
 #cd mozilla-central
-cd %{source_name}-%{version}
+cd %{source_name}-%{sversion}
 
 #sed -e 's/__RPM_VERSION_INTERNAL__/%{version_internal}/' %{P:%%PATCH0} \
 #    > version.patch
@@ -171,7 +177,7 @@ cd %{source_name}-%{version}
 
 %build
 #cd mozilla-central
-cd %{source_name}-%{version}
+cd %{source_name}-%{sversion}
 
 INTERNAL_GECKO=%{version_internal}
 MOZ_APP_DIR=%{_libdir}/%{name}-${INTERNAL_GECKO}
@@ -199,7 +205,7 @@ make -f client.mk build STRIP="/bin/true" MOZ_MAKE_FLAGS="$MOZ_SMP_FLAGS"
 
 %install
 #cd mozilla-central
-cd %{source_name}-%{version}
+cd %{source_name}-%{sversion}
 %{__rm} -rf $RPM_BUILD_ROOT
 
 INTERNAL_GECKO=%{version_internal}
