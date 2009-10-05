@@ -9,8 +9,8 @@
 %define build_langpacks      1
 
 %define version 1.9.2
-%define snapshot 20090731
-%define sversion 0.0~%{snapshot}
+%define snapshot 20090925
+%define sversion %{version}a1pre_%{snapshot}
 %define rel 1
 %define release %mkrel 0.%{snapshot}.%{rel}
 
