@@ -74,7 +74,6 @@ BuildRequires:  alsa-lib-devel
 BuildRequires:  autoconf2.1
 BuildRequires:  openssl-devel
 
-Requires:       mozilla-filesystem
 Requires:       nspr >= %{nspr_version}
 Requires:       nss >= %{nss_version}
 
