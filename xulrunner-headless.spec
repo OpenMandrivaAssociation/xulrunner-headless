@@ -34,7 +34,7 @@ Patch3:         plugin-focus.patch
 
 # ---------------------------------------------------
 
-BuildRoot:      %(mktemp -ud %{_tmppath}/%{name}-%{version}-%{release}-XXXXXX)
+BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 
 Autoreq: 0
 Autoprov: 0
