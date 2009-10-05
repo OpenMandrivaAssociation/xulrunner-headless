@@ -24,7 +24,7 @@ Version:        %{version}
 Release:        %{release}
 URL:            http://developer.mozilla.org/En/XULRunner
 License:        MPLv1.1 or GPLv2+ or LGPLv2+
-Group:          Applications/Internet
+Group:          System/Libraries
 Source0:        xulrunner-%{sversion}.tar.bz2
 %if %{build_langpacks}
 Source2:        xulrunner-langpacks.tar.bz2
@@ -85,7 +85,7 @@ XULRunner provides the XUL Runtime environment for Gecko applications.
 
 %package devel
 Summary: Development files for Gecko
-Group: Development/Libraries
+Group: Development/Other
 
 Provides: gecko-headless-devel = %{version}
 Requires: %{name} = %{version}-%{release}
@@ -95,7 +95,7 @@ Gecko development files.
 
 %package python
 Summary: Files needed to run Gecko applications written in python
-Group: Applications/Internet
+Group: Development/Python
 BuildRequires: python-devel
 Requires: gecko-libs-headless = %{version}-%{release}
 Provides: pyxpcom = %{version}-%{release}
@@ -106,7 +106,7 @@ Files needed to run Gecko applications written in python.
 
 %package python-devel
 Summary: Development files for building Gecko applications written in python
-Group: Development/Libraries
+Group: Development/Python
 Requires: gecko-headless-devel = %{version}-%{release}
 Provides: pyxpcom-devel = %{version}-%{release}
 Provides: gecko-python-devel = %{version}-%{release}
