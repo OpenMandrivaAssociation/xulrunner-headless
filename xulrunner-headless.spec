@@ -77,17 +77,6 @@ BuildRequires:  openssl-devel
 Requires:       mozilla-filesystem
 Requires:       nspr >= %{nspr_version}
 Requires:       nss >= %{nss_version}
-Requires:       libstdc++43
-Requires:       libgnome
-Requires:       gnome-vfs2
-Requires:       libjpeg
-Requires:       freetype
-Requires:       fontconfig
-Requires:       bzip2
-Requires:       python-libs
-Requires:       sqlite
-Requires:       dbus-glib
-Requires:       alsa-lib
 
 Provides:       gecko-libs-headless = %{version}
 
@@ -98,34 +87,8 @@ XULRunner provides the XUL Runtime environment for Gecko applications.
 Summary: Development files for Gecko
 Group: Development/Libraries
 
-Autoreq: 0
-Obsoletes: mozilla-devel < 1.9
-Obsoletes: firefox-devel < 2.1
 Provides: gecko-headless-devel = %{version}
-
 Requires: %{name} = %{version}-%{release}
-Requires: nspr-devel >= %{nspr_version}
-Requires: nss-devel >= %{nss_version}
-#Requires: cairo-devel >= %{cairo_version}
-#Requires: libjpeg-devel
-Requires: zip
-#Requires: bzip2-devel
-#Requires: zlib-devel
-#Requires: lcms-devel >= %{lcms_version}
-Requires: libIDL-devel
-Requires: gtk2-devel
-Requires: gnome-vfs2-devel
-Requires: libgnome-devel
-Requires: libgnomeui-devel
-Requires: krb5-devel
-Requires: pango-devel
-Requires: freetype-devel >= %{freetype_version}
-Requires: libXt-devel
-Requires: libXrender-devel
-#Requires: hunspell-devel
-Requires: sqlite-devel >= ${sqlite_version}
-Requires: startup-notification-devel
-Requires: alsa-lib-devel
 
 %description devel
 Gecko development files.
