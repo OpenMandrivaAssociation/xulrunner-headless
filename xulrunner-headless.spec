@@ -52,18 +52,18 @@ BuildRequires:  libIDL-devel
 BuildRequires:  gtk2-devel
 BuildRequires:  gnome-vfs2-devel
 BuildRequires:  libgnome-devel
-BuildRequires:  libgnomeui-devel
+BuildRequires:  gnomeui2-devel
 BuildRequires:  krb5-devel
 BuildRequires:  pango-devel
-BuildRequires:  freetype-devel >= %{freetype_version}
-BuildRequires:  libXt-devel
-BuildRequires:  libXrender-devel
+BuildRequires:  freetype2-devel >= %{freetype_version}
+BuildRequires:  libxt-devel
+BuildRequires:  libxrender-devel
 #BuildRequires:  hunspell-devel
 BuildRequires:  sqlite-devel >= %{sqlite_version}
 BuildRequires:  startup-notification-devel
 BuildRequires:  alsa-lib-devel
 # For -sqlite.patch
-BuildRequires:  autoconf213
+BuildRequires:  autoconf2.1
 BuildRequires:  openssl-devel
 
 Requires:       mozilla-filesystem
