@@ -32,6 +32,8 @@ Patch1:         xulrunner-pkgconfig.patch
 Patch2:         moblin-repack.patch
 Patch3:         plugin-focus.patch
 
+Patch10:	xulrunner-1.9.0.5-fix-string-format.patch
+
 # ---------------------------------------------------
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
@@ -159,6 +161,8 @@ cd %{source_name}-%{version}
 %patch1 -p1 -b .pc
 %patch2 -p1 -b .moblin-repack
 %patch3 -p1 -b .plugin-focus
+
+%patch10 -p0 -b .string-format
 
 %{__rm} -f .mozconfig
 %{__cp} %{SOURCE10} .mozconfig
