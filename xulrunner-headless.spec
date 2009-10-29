@@ -9,7 +9,7 @@
 %define build_langpacks      1
 
 %define version 1.9.2
-%define snapshot 20090925
+%define snapshot 20091020
 %define sversion %{version}a1pre_%{snapshot}
 %define rel 1
 %define release %mkrel 0.%{snapshot}.%{rel}
@@ -37,6 +37,8 @@ Patch0:         mozilla-jemalloc.patch
 Patch1:         xulrunner-pkgconfig.patch
 Patch2:         moblin-repack.patch
 Patch3:         plugin-focus.patch
+Patch4:         remove-global-local-storage.patch
+Patch5:         increase-js-watchdog-interval.patch
 
 Patch10:	xulrunner-1.9.0.5-fix-string-format.patch
 
@@ -128,7 +130,9 @@ cd %{source_name}-%{sversion}
 %patch0 -p1 -b .jemalloc
 %patch1 -p1 -b .pc
 %patch2 -p1 -b .moblin-repack
-%patch3 -p1 -b .plugin-focus
+%patch3 -p0 -b .plugin-focus
+%patch4 -p1 -b .remove-global-local-storage
+%patch5 -p1 -b .increase-js-watchdog-interval
 
 %patch10 -p0 -b .string-format
 
