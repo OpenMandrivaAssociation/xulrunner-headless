@@ -1,0 +1,191 @@
+From 0e281ca4c4bf4c0bbad153c543cbf31820a4962e Mon Sep 17 00:00:00 2001
+From: Neil Roberts <neil@linux.intel.com>
+Date: Mon, 12 Oct 2009 18:26:08 +0100
+Subject: [PATCH] Make the Javascript watchdog interval 3 seconds with slack
+
+This adds a new version of PR_WaitCondVar called PR_WaitCondVarSeconds
+which waits for an interval with a resolution of one second. It tries
+to use the same algorithm as g_timeout_add_seconds to calculate a
+perturbance value. That way the process should wake up at the same
+time as any other glib processes in the system.
+
+The Javascript watchdog uses this new function to wait for
+approximately 3 seconds rather than exactly 1 second.
+---
+ js/src/xpconnect/src/xpcjsruntime.cpp |    2 +-
+ nsprpub/pr/include/prcvar.h           |    7 +++
+ nsprpub/pr/src/pthreads/ptsynch.c     |   96 ++++++++++++++++++++++++++++++---
+ 3 files changed, 96 insertions(+), 9 deletions(-)
+
+diff --git a/nsprpub/pr/include/prcvar.h b/nsprpub/pr/include/prcvar.h
+index c668493..2e4b959 100644
+--- a/nsprpub/pr/include/prcvar.h
++++ b/nsprpub/pr/include/prcvar.h
+@@ -97,6 +97,13 @@ NSPR_API(void) PR_DestroyCondVar(PRCondVar *cvar);
+ NSPR_API(PRStatus) PR_WaitCondVar(PRCondVar *cvar, PRIntervalTime timeout);
+ 
+ /*
++** Same as above but tries to fudge the timeout so that it would
++** wakeup and the same time as other processes in the same way that
++** g_timeout_add_seconds works.
++*/
++NSPR_API(PRStatus) PR_WaitCondVarSeconds(PRCondVar *cvar, PRUint32 seconds);
++
++/*
+ ** Notify ONE thread that is currently waiting on 'cvar'. Which thread is
+ ** dependent on the implementation of the runtime. Common sense would dictate
+ ** that all threads waiting on a single condition have identical semantics,
+diff --git a/nsprpub/pr/src/pthreads/ptsynch.c b/nsprpub/pr/src/pthreads/ptsynch.c
+index 8b141cd..3e28f1b 100644
+--- a/nsprpub/pr/src/pthreads/ptsynch.c
++++ b/nsprpub/pr/src/pthreads/ptsynch.c
+@@ -269,17 +269,43 @@ PR_IMPLEMENT(void) PR_AssertCurrentThreadOwnsLock(PRLock *lock)
+ #define PT_NANOPERMICRO 1000UL
+ #define PT_BILLION 1000000000UL
+ 
++/* We need the same string hashing function that glib uses to get the
++   right perturbance below */
++static PRUint32
++pt_StrHash(const char *v)
++{
++    /* 31 bit hash function */
++    const signed char *p = (const signed char *) v;
++    PRUint32 h = *p;
++
++    if (h)
++        for (p += 1; *p != '\0'; p++)
++            h = (h << 5) - h + *p;
++
++    return h;
++}
++
+ static PRIntn pt_TimedWait(
+-    pthread_cond_t *cv, pthread_mutex_t *ml, PRIntervalTime timeout)
++    pthread_cond_t *cv, pthread_mutex_t *ml, PRIntervalTime timeout,
++    PRBool waitSeconds)
+ {
+     int rv;
+     struct timeval now;
+     struct timespec tmo;
+     PRUint32 ticks = PR_TicksPerSecond();
+ 
+-    tmo.tv_sec = (PRInt32)(timeout / ticks);
+-    tmo.tv_nsec = (PRInt32)(timeout - (tmo.tv_sec * ticks));
+-    tmo.tv_nsec = (PRInt32)PR_IntervalToMicroseconds(PT_NANOPERMICRO * tmo.tv_nsec);
++    if (waitSeconds)
++    {
++        tmo.tv_sec = timeout;
++        tmo.tv_nsec = 0;
++    }
++    else
++    {
++        tmo.tv_sec = (PRInt32)(timeout / ticks);
++        tmo.tv_nsec = (PRInt32)(timeout - (tmo.tv_sec * ticks));
++        tmo.tv_nsec = (PRInt32)PR_IntervalToMicroseconds(PT_NANOPERMICRO
++                                                         * tmo.tv_nsec);
++    }
+ 
+     /* pthreads wants this in absolute time, off we go ... */
+     (void)GETTIMEOFDAY(&now);
+@@ -289,6 +315,49 @@ static PRIntn pt_TimedWait(
+     tmo.tv_sec += tmo.tv_nsec / PT_BILLION;
+     tmo.tv_nsec %= PT_BILLION;
+ 
++    if (waitSeconds)
++    {
++        /* We want to try to use the same pertubance value as glib
++           would so that we wake up at the same time as any glib
++           apps */
++        static int timer_perturb = -1;
++
++        if (timer_perturb == -1)
++        {
++            const char *session_bus_address =
++                PR_GetEnv("DBUS_SESSION_BUS_ADDRESS");
++            if (!session_bus_address)
++                session_bus_address = PR_GetEnv("HOSTNAME");
++            if (session_bus_address)
++                timer_perturb = PR_ABS((int) pt_StrHash(session_bus_address));
++            else
++                timer_perturb = 0;
++        }
++
++        int perturb = timer_perturb % 1000000;
++
++        tmo.tv_nsec -= perturb * 1000;
++        if (tmo.tv_nsec < 0)
++        {
++            tmo.tv_nsec += PT_BILLION;
++            tmo.tv_sec--;
++        }
++
++        int remainder = tmo.tv_nsec / 1000 % 1000000;
++        if (remainder >= 1000000 / 4) /* round up */
++            tmo.tv_nsec += PT_BILLION;
++        tmo.tv_nsec -= remainder * 1000;
++        /* shift back */
++        tmo.tv_nsec += perturb * 1000;
++
++        /* the rounding may have overflown tv_nsec */
++        while (tmo.tv_nsec > PT_BILLION)
++        {
++            tmo.tv_nsec -= PT_BILLION;
++            tmo.tv_sec++;
++        }
++    }
++
+     rv = pthread_cond_timedwait(cv, ml, &tmo);
+ 
+     /* NSPR doesn't report timeouts */
+@@ -378,7 +447,8 @@ PR_IMPLEMENT(void) PR_DestroyCondVar(PRCondVar *cvar)
+     }
+ }  /* PR_DestroyCondVar */
+ 
+-PR_IMPLEMENT(PRStatus) PR_WaitCondVar(PRCondVar *cvar, PRIntervalTime timeout)
++static PRIntn
++PR_WaitCondVarFull(PRCondVar *cvar, PRIntervalTime timeout, PRBool waitSeconds)
+ {
+     PRIntn rv;
+     PRThread *thred = PR_GetCurrentThread();
+@@ -413,10 +483,10 @@ PR_IMPLEMENT(PRStatus) PR_WaitCondVar(PRCondVar *cvar, PRIntervalTime timeout)
+      */
+     cvar->lock->locked = PR_FALSE;
+ 
+-    if (timeout == PR_INTERVAL_NO_TIMEOUT)
++    if (!waitSeconds && timeout == PR_INTERVAL_NO_TIMEOUT)
+         rv = pthread_cond_wait(&cvar->cv, &cvar->lock->mutex);
+     else
+-        rv = pt_TimedWait(&cvar->cv, &cvar->lock->mutex, timeout);
++        rv = pt_TimedWait(&cvar->cv, &cvar->lock->mutex, timeout, waitSeconds);
+ 
+     /* We just got the lock back - this better be empty */
+     PR_ASSERT(PR_FALSE == cvar->lock->locked);
+@@ -439,6 +509,16 @@ aborted:
+     return PR_FAILURE;
+ }  /* PR_WaitCondVar */
+ 
++PR_IMPLEMENT(PRStatus) PR_WaitCondVar(PRCondVar *cvar, PRIntervalTime timeout)
++{
++    return PR_WaitCondVarFull(cvar, timeout, PR_FALSE);
++}
++
++PR_IMPLEMENT(PRStatus) PR_WaitCondVarSeconds(PRCondVar *cvar, PRUint32 seconds)
++{
++    return PR_WaitCondVarFull(cvar, seconds, PR_TRUE);
++}
++
+ PR_IMPLEMENT(PRStatus) PR_NotifyCondVar(PRCondVar *cvar)
+ {
+     PR_ASSERT(cvar != NULL);   
+@@ -1125,7 +1205,7 @@ PR_IMPLEMENT(PRStatus) PRP_NakedWait(
+     if (timeout == PR_INTERVAL_NO_TIMEOUT)
+         rv = pthread_cond_wait(&cvar->cv, &ml->mutex);
+     else
+-        rv = pt_TimedWait(&cvar->cv, &ml->mutex, timeout);
++        rv = pt_TimedWait(&cvar->cv, &ml->mutex, timeout, PR_FALSE);
+     if (rv != 0)
+     {
+         _PR_MD_MAP_DEFAULT_ERROR(rv);
+-- 
+1.6.5.rc1.46.g4d818
+

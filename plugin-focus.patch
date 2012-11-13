@@ -1,0 +1,37 @@
+--- widget/src/headless/nsWindow.cpp.old	2009-10-29 13:10:07.000000000 -0400
++++ widget/src/headless/nsWindow.cpp	2009-10-29 13:12:12.000000000 -0400
+@@ -1991,7 +1991,8 @@
+ void
+ nsWindow::SetNonXEmbedPluginFocus()
+ {
+-    if (gPluginFocusWindow == this || mPluginType!=PluginType_NONXEMBED) {
++    // XEmbed plugin also needs the method to set focus
++    if (gPluginFocusWindow == this /*|| mPluginType!=PluginType_NONXEMBED*/) {
+         return;
+     }
+ 
+@@ -2028,9 +2029,14 @@
+     // same GdkWindow as toplevel. If the current focused window
+     // is not the focus proxy, we return without any change.
+ 
++    //in headless, gdkfocuswin is null, so remove this condition
++    //plugin focus will be set when mouse pointer enter
++    //and focus will be lost when mouse pointer leave
++    /*
+     if (plugin_toplevel != focus_toplevel) {
+         return;
+     }
++    */
+ 
+     // switch the focus from the focus proxy to the plugin window
+     mOldFocusWindow = curFocusWindow;
+@@ -2060,7 +2066,8 @@
+     // This method is only for the nsWindow which contains a
+     // Non-XEmbed plugin, for example, JAVA plugin.
+     // XEmbed plugin also needs this method to lose focus
+-    if (gPluginFocusWindow != this || mPluginType!=PluginType_NONXEMBED) {
++    // XEmbed plugin also needs this method to lose focus
++    if (gPluginFocusWindow != this /*|| mPluginType!=PluginType_NONXEMBED*/) {
+         return;
+     }
+ 

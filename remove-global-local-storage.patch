@@ -1,0 +1,114 @@
+From ebf2663ce0141ba6a995a90afa632edfaacc1e78 Mon Sep 17 00:00:00 2001
+From: Neil Roberts <neil@linux.intel.com>
+Date: Mon, 27 Jul 2009 14:02:34 +0100
+Subject: [PATCH] Remove globalStorage and localStorage from the nsIDOMStorageWindow interface
+
+This completely removes the globalStorage and localStorage properties
+from the DOM window object so that web pages have a better chance of
+detecting that we don't support DOM storage.
+
+Session storage is left in because that is entirely stored in memory
+so it works fine with multiple processes.
+---
+ dom/base/nsGlobalWindow.cpp                    |   52 ------------------------
+ dom/interfaces/storage/nsIDOMStorageWindow.idl |   10 -----
+ js/src/xpconnect/src/dom_quickstubs.qsconf     |    1 -
+ 3 files changed, 0 insertions(+), 63 deletions(-)
+
+diff --git a/dom/base/nsGlobalWindow.cpp b/dom/base/nsGlobalWindow.cpp
+index e248c74..37fd067 100644
+--- a/dom/base/nsGlobalWindow.cpp
++++ b/dom/base/nsGlobalWindow.cpp
+@@ -6975,58 +6975,6 @@ nsGlobalWindow::GetSessionStorage(nsIDOMStorage ** aSessionStorage)
+   return NS_OK;
+ }
+ 
+-NS_IMETHODIMP
+-nsGlobalWindow::GetGlobalStorage(nsIDOMStorageList ** aGlobalStorage)
+-{
+-  NS_ENSURE_ARG_POINTER(aGlobalStorage);
+-
+-#ifdef MOZ_STORAGE
+-  if (!sGlobalStorageList) {
+-    nsresult rv = NS_NewDOMStorageList(&sGlobalStorageList);
+-    NS_ENSURE_SUCCESS(rv, rv);
+-  }
+-
+-  *aGlobalStorage = sGlobalStorageList;
+-  NS_IF_ADDREF(*aGlobalStorage);
+-
+-  return NS_OK;
+-#else
+-  return NS_ERROR_DOM_NOT_SUPPORTED_ERR;
+-#endif
+-}
+-
+-NS_IMETHODIMP
+-nsGlobalWindow::GetLocalStorage(nsIDOMStorage ** aLocalStorage)
+-{
+-  FORWARD_TO_INNER(GetLocalStorage, (aLocalStorage), NS_ERROR_UNEXPECTED);
+-
+-  NS_ENSURE_ARG(aLocalStorage);
+-
+-  if (!mLocalStorage) {
+-    *aLocalStorage = nsnull;
+-
+-    nsresult rv;
+-
+-    PRPackedBool unused;
+-    if (!nsDOMStorage::CanUseStorage(&unused))
+-      return NS_ERROR_DOM_SECURITY_ERR;
+-
+-    nsIPrincipal *principal = GetPrincipal();
+-    if (!principal)
+-      return NS_OK;
+-
+-    nsCOMPtr<nsIDOMStorageManager> storageManager =
+-      do_GetService("@mozilla.org/dom/storagemanager;1", &rv);
+-    NS_ENSURE_SUCCESS(rv, rv);
+-
+-    rv = storageManager->GetLocalStorageForPrincipal(principal, getter_AddRefs(mLocalStorage));
+-    NS_ENSURE_SUCCESS(rv, rv);
+-  }
+-
+-  NS_ADDREF(*aLocalStorage = mLocalStorage);
+-  return NS_OK;
+-}
+-
+ //*****************************************************************************
+ // nsGlobalWindow::nsIInterfaceRequestor
+ //*****************************************************************************
+diff --git a/dom/interfaces/storage/nsIDOMStorageWindow.idl b/dom/interfaces/storage/nsIDOMStorageWindow.idl
+index afecc4e..817116f 100644
+--- a/dom/interfaces/storage/nsIDOMStorageWindow.idl
++++ b/dom/interfaces/storage/nsIDOMStorageWindow.idl
+@@ -56,14 +56,4 @@ interface nsIDOMStorageWindow : nsISupports
+    * Session storage for the current browsing context.
+    */
+   readonly attribute nsIDOMStorage sessionStorage;
+-
+-  /**
+-   * Global storage, accessible by domain.
+-   */
+-  readonly attribute nsIDOMStorageList globalStorage;
+-
+-  /**
+-   * Local storage for the current browsing context.
+-   */
+-  readonly attribute nsIDOMStorage localStorage;
+ };
+diff --git a/js/src/xpconnect/src/dom_quickstubs.qsconf b/js/src/xpconnect/src/dom_quickstubs.qsconf
+index 9e89367..efacd32 100644
+--- a/js/src/xpconnect/src/dom_quickstubs.qsconf
++++ b/js/src/xpconnect/src/dom_quickstubs.qsconf
+@@ -472,7 +472,6 @@ members = [
+     'nsIDOMStorage.clear',
+     'nsIDOMStorageItem.value',
+     'nsIDOMStorageWindow.sessionStorage',
+-    'nsIDOMStorageWindow.globalStorage',
+ 
+     # dom/public/idl/stylesheets - None.
+ 
+-- 
+1.6.3.2.198.g6096d
+
