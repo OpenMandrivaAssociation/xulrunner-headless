@@ -22,7 +22,7 @@ Summary:        XUL Runtime for Gecko Applications
 Name:           xulrunner-headless
 Version:        %{version}
 Release:        %{release}
-URL:            http://developer.mozilla.org/En/XULRunner
+URL:            https://developer.mozilla.org/En/XULRunner
 License:        MPLv1.1 or GPLv2+ or LGPLv2+
 Group:          System/Libraries
 Source0:        xulrunner-%{sversion}.tar.bz2
