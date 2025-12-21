@@ -49,6 +49,7 @@ BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-buildroot
 Autoreq: 0
 Autoprov: 0
 
+BuildRequires:	make
 BuildRequires:  nspr-devel >= %{nspr_version}
 BuildRequires:  nss-static-devel >= %{nss_version}
 #BuildRequires:  cairo-devel >= %{cairo_version}
