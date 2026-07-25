@@ -12,7 +12,7 @@
 %define snapshot 20091020
 %define sversion %{version}a1pre_%{snapshot}
 %define rel 1
-%define release %mkrel 0.%{snapshot}.%{rel}
+%define release 0.%{snapshot}.%{rel}.1
 
 %define version_internal %{version}a1pre-headless
 %define mozappdir         %{_libdir}/%{source_name}-%{version_internal}
